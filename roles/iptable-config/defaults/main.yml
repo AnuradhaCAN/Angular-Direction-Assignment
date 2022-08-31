@@ -1,0 +1,19 @@
+---
+
+iptables_config: |
+  *filter
+
+  # --- Allow the outside world to connect to  HTTPS.
+  -A INPUT -p tcp -m tcp --dport 443 -j ACCEPT
+
+
+  - name: Allow new incoming  TCP port 22 (SSH)
+  ansible.builtin.iptables:
+    chain: INPUT
+    protocol: tcp
+    destination_port: 22
+    ctstate: NEW
+    syn: match
+    jump: ACCEPT
+    comment: Accept SSH connections.
+  

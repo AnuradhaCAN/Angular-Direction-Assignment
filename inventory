@@ -1,0 +1,10 @@
+#[all_hosts]
+#webservers
+#bastion_host
+
+[webservers]
+host1 ansible_host=172.31.25.25
+
+[bastion_host]
+host2 ansible_host=172.31.21.72
+

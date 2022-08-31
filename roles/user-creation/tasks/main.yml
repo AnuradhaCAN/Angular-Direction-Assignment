@@ -1,0 +1,72 @@
+---
+# tasks file for student.bash_env
+  - name: create groups
+    group:
+      name: "{{ item }}"
+      state: present
+    with_items: "{{ user_groups }}"
+
+  - name: reading the csv file
+    read_csv:
+      path: users.csv
+    register: user_list
+    delegate_to: localhost
+
+  - name: create users from the csv
+    user:
+      name: "{{ item.Username }}"
+      groups: "{{ item.Groups }}"
+      append: true
+      password: "{{ item.Password | password_hash('sha512') }}"
+      shell: /bin/bash
+      createhome: yes
+      generate_ssh_key: yes
+      state: present
+    loop: "{{ user_list.list }}"
+    become: true
+    when: ('bastion_host' not in group_names) and (item.is_bastion=='no')
+
+  - name: add Public Key for each user
+    lineinfile:
+      dest: "/home/{{ item.Username }}/.ssh/authorized_keys"
+      line: "{{ item.Pubkey }}"
+      create: yes
+      mode: 775
+    loop: "{{ user_list.list }}"
+    become: true
+    when: ('bastion_host' not in group_names) and (item.is_bastion=='no')
+
+  - name: create bastion users with csv
+    user:
+      name: "{{ item.Username }}"
+      groups: "{{ item.Groups }}"
+      append: true
+      password: "{{ item.Password | password_hash('sha512') }}"
+      shell: /bin/bash
+      createhome: yes
+      generate_ssh_key: yes
+      state: present
+    loop: "{{ user_list.list }}"
+    become: true
+    when: (item.is_bastion=='yes') and  (inventory_hostname in groups['bastion_host'])
+
+  - name: add Public Key for bastion users
+    lineinfile:
+      dest: "/home/{{ item.Username }}/.ssh/authorized_keys"
+      line: "{{ item.Pubkey }}"
+      owner: "{{ item.Username }}"
+      group: "{{ item.Username }}"
+      create: yes
+      mode: 775
+    loop: "{{ user_list.list }}"
+    become: true
+    when: (item.is_bastion=='yes') and  (inventory_hostname in groups['bastion_host'])
+  
+  - name: Enable Password Authentication
+    lineinfile:
+        dest: "/etc/ssh/sshd_config"
+        regexp: '^(.*)PasswordAuthentication(.*)$'
+        line: 'PasswordAuthentication yes'
+    notify:
+    - reload sshd
+

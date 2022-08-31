@@ -1,0 +1,5 @@
+---
+# defaults file for all users
+
+skel_dir: '/etc/skel/'
+default_prompt: '\$'

@@ -1,0 +1,11 @@
+- name: Deploy resolv.conf
+  become: yes
+  template:
+    src: templates/resolv.conf.j2
+    dest: /etc/resolv.conf
+    owner: root
+    group: root
+    mode: 0644
+    backup: yes
+  notify:
+    - reload NetworkManager

@@ -1,0 +1,6 @@
+---
+# vars file for student.bash_env
+  user_groups:
+    - 'Frontend'
+    - 'Developer'
+    - 'QA'
